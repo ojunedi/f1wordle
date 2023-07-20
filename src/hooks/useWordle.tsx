@@ -6,6 +6,7 @@ const useWordle = (solution: string) => {
   const [guesses, setGuesses] = useState<any[]>([...Array(6)]); // each guess will be an array
   const [history, setHistory] = useState<string[]>([]); // each guess will be a string
   const [isCorrect, setIsCorrect] = useState(false);
+  const [usedKeys, setUsedKeys] = useState({}); // {a: 'green', b: 'grey, ...}
 
   // format a guess into an array of letter objects
   // e.g [{key: 'a', color: 'yellow'}]
@@ -13,12 +14,12 @@ const useWordle = (solution: string) => {
     console.log("formatting the guess", currentGuess);
     let solutionArray = [...solution];
     let formattedGuess = [...currentGuess].map((l) => {
-      return { key: l, color: "grey" };
+      return { key: l.toLowerCase(), color: "grey" };
     });
 
     // find any green letters
     formattedGuess.forEach((char, index) => {
-      if (solutionArray[index] === char.key) {
+      if (solutionArray[index].toLowerCase() === char.key) {
         formattedGuess[index].color = "green";
         solutionArray[index] = "null";
       }
@@ -37,7 +38,7 @@ const useWordle = (solution: string) => {
   // increment turn
   // updatethe isCorrect state
   const addNewGuess = (formattedGuess: any) => {
-    if (currentGuess === solution) {
+    if (currentGuess.toLowerCase() === solution) {
       setIsCorrect(true);
     }
     setGuesses((prevGuesses) => {
@@ -46,10 +47,29 @@ const useWordle = (solution: string) => {
       return newGuesses;
     });
     setHistory((prevHistory) => {
-      return [...prevHistory, currentGuess];
+      return [...prevHistory, currentGuess.toLowerCase()];
     });
     setTurn((prevTurn) => {
       return prevTurn + 1;
+    });
+    setUsedKeys((prevUsedKeys) => {
+        let newKeys = {...prevUsedKeys};
+        formattedGuess.forEach((l) => {
+            const currentColor = newKeys[l.key];
+            if (l.color === 'green') {
+                newKeys[l.key] = 'green'
+                return
+            }
+            if (l.color === 'yellow' && currentColor !== 'green') {
+                newKeys[l.key] = 'yellow'
+                return
+            }
+            if (l.color === 'grey' && currentColor !== 'green' && currentColor !== 'yellow') {
+                newKeys[l.key] = 'grey'
+                return
+            }
+        });
+        return newKeys;
     });
     setCurrentGuess("");
   };
@@ -87,7 +107,7 @@ const useWordle = (solution: string) => {
       });
     }
   };
-  return { turn, currentGuess, guesses, isCorrect, handleKeyup };
+  return { turn, currentGuess, guesses, isCorrect,usedKeys, handleKeyup };
 };
 
 export default useWordle;
